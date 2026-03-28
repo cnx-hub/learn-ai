@@ -8,7 +8,6 @@ const encodingName = getEncodingNameForModel('gpt-4o');
 const enc = getEncoding(encodingName);
 
 console.log('Hello, world!', enc.encode('Hello, world!').length);
-
 console.log('apple', enc.encode("apple").length);
 console.log('pineapple', enc.encode("pineapple").length);
 console.log('苹果', enc.encode("苹果").length);
