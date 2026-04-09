@@ -12,7 +12,8 @@ const model = new ChatOpenAI({
     modelName: process.env.MODEL_NAME,
     configuration: {
         baseURL: process.env.BASE_URL,
-    }
+    },
+    temperature: 0,
 });
 
 export {
