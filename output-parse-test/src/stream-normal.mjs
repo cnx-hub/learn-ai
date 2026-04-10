@@ -17,7 +17,7 @@ try {
         chunkCount++;
         const content = chunk.content;
         fullContent += content;
-        console.log(`第 ${chunkCount} 块数据: ${content}`);
+        // console.log(`第 ${chunkCount} 块数据: ${content}`);
 
         process.stdout.write(content);
     }
