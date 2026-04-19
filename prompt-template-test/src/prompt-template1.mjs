@@ -1,5 +1,5 @@
 import { PromptTemplate } from '@langchain/core/prompts';
-import { model } from '../../output-parse-test/src/initConfig.mjs';
+import { model } from './initConfig/index.mjs';
 
 const template = PromptTemplate.fromTemplate(`
 你是一名严谨但不失人情味的工程团队负责人，需要根据本周数据写一份周报。

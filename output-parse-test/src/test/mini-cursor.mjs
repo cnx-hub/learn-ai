@@ -59,6 +59,8 @@ async function runAgentWithTools(query, maxIterations = 30) {
                 }
 
                 if (parsedTools?.length > 0) {
+                    //  console.log(JSON.stringify(parsedTools, null, 2));
+
                     for (const toolCall of parsedTools) {
                         if (toolCall.type === 'write_file' && toolCall.args?.content) {
                             const toolCallId = toolCall.id || toolCall.args.filePath || 'default';
