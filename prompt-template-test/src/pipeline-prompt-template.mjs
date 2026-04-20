@@ -97,5 +97,5 @@ const finalPrompt = await typedPipelinePrompt.format({
     company_values: '「极致、开放、靠谱」的价值观',
 });
 
-console.log('组合后的 ptompt')
-console.log(finalPrompt)
+// console.log('组合后的 ptompt')
+// console.log(finalPrompt)
