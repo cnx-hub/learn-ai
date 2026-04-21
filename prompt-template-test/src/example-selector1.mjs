@@ -48,6 +48,7 @@ const lengthSelector = await LengthBasedExampleSelector.fromExamples(examples, {
 
 // console.log(lengthSelector, 'lengthSelector')
 
+// prefix、suffix本身不算在长度内部，按示例原顺序从前往后加入直到超过 maxLength
 const fewShowPrompt = new FewShotPromptTemplate({
     examplePrompt,
     exampleSelector: lengthSelector,
@@ -70,7 +71,7 @@ const finalPrompt = await fewShowPrompt.format({
     current_requirement: currentRequirement
 });
 
-console.log(finalPrompt)
+// console.log(finalPrompt)
 
 const finalPrompt2 = await fewShowPrompt.format({
     current_requirement: ''
