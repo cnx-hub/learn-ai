@@ -32,6 +32,52 @@ const fewShotExamples = new FewShotChatMessagePromptTemplate({
     inputVariables: []
 });
 
-const chatPrompt = await fewShotExamples.formatPromptValue({});
+// console.log(fewShotExamples)
 
-console.log(chatPrompt.toChatMessages(), 'chatPrompt')
+const chatPrompt = ChatPromptTemplate.fromMessages([
+    [
+        'system',
+        '你是一名资深技术负责人，请根据给定的工作内容，参考上面的示例，帮我写一段结构清晰、重点突出的周报片段（使用 Markdown 列表）。',
+    ],
+    [
+        'system',
+        '下面是若干参考示例，请重点学习它们的「表达方式和结构」，而不是照搬具体内容：',
+    ],
+    fewShotExamples,
+    [
+        'human',
+        '这是我本周的实际工作内容，请帮我整理成周报：\n{current_work}',
+    ],
+]);
+
+const currentWork =
+    '本周完成了订单模块的一轮重构，拆分了历史遗留的大文件，并补齐了核心路径的单测；' +
+    '同时修复了两起线上性能问题，并把指标接入统一监控看板。';
+
+async function main() {
+    // 组装成消息
+    const messages = await chatPrompt.formatMessages({
+        current_work: currentWork,
+    });
+
+    console.log('\n===== 发送给模型的消息 =====\n');
+    console.log(messages);
+
+    // 如果你配置了模型，可以真正调用一次
+    try {
+        const stream = await model.stream(messages);
+        console.log('\n===== 模型输出 =====\n');
+        for await (const chunk of stream) {
+            process.stdout.write(chunk.content);
+        }
+        console.log('\n');
+    } catch (e) {
+        console.log(
+            '\n（提示：如需真实调用模型，请确认已配置 MODEL_NAME / OPENAI_API_KEY / OPENAI_BASE_URL）',
+        );
+    }
+}
+
+main();
+
+// console.log(chatPrompt.toChatMessages(), 'chatPrompt')
