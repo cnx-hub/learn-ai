@@ -86,40 +86,43 @@ const agentStepChain = RunnableSequence.from([
                 }
             }
         ],
-        (state) => {
-            const { messages, response } = state;
-            const newMessages = [...messages, response];
+        RunnableSequence.from([
+            (state) => {
+                const { messages, response } = state;
+                const newMessages = [...messages, response];
 
-            console.log(
-                chalk.bgBlue(
-                    `🔍 检测到 ${response.tool_calls.length} 个工具调用`
-                )
-            );
-            console.log(
-                chalk.bgBlue(
-                    `🔍 工具调用: ${response.tool_calls
-                        .map((t) => t.name)
-                        .join(', ')}`
-                )
-            );
+                console.log(
+                    chalk.bgBlue(
+                        `🔍 检测到 ${response.tool_calls.length} 个工具调用`
+                    )
+                );
+                console.log(
+                    chalk.bgBlue(
+                        `🔍 工具调用: ${response.tool_calls
+                            .map((t) => t.name)
+                            .join(', ')}`
+                    )
+                );
 
-            return {
-                ...state,
-                messages: newMessages,
-            };
-        }
+                return {
+                    ...state,
+                    messages: newMessages,
+                };
+            },
+            RunnablePassthrough.assign({
+                toolMessages: toolExecutor,
+            }),
+            (state) => {
+                const { messages, toolMessages } = state;
+                return {
+                    ...state,
+                    messages: [...messages, ...(toolMessages ?? [])],
+                    done: false,
+                };
+            }
+        ]),
+
     ]),
-    RunnablePassthrough.assign({
-        toolMessages: toolExecutor,
-    }),
-    (state) => {
-        const { messages, toolMessages } = state;
-        return {
-            ...state,
-            messages: [...messages, ...(toolMessages ?? [])],
-            done: false,
-        };
-    }
 ])
 
 async function runAgentWithTools(query, maxIterations = 30) {
