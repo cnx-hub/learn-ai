@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import { OpenAIEmbeddings, ChatOpenAI } from '@langchain/openai';
 import { MilvusClient, MetricType } from '@zilliz/milvus2-sdk-node';
 import { RunnableSequence, RunnableLambda, RunnableBranch } from '@langchain/core/runnables';
-import { PromptTemplate } from "@langchain/core/prompts";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -125,24 +125,22 @@ const buildPromptInput = new RunnableLambda({
 });
 
 
-// PromptTemplate：负责把 context / question 拼成最终 prompt
-const promptTemplate = PromptTemplate.fromTemplate(
-    `你是一个专业的《天龙八部》小说助手。基于小说内容回答问题，用准确、详细的语言。
-
-请根据以下《天龙八部》小说片段内容回答问题：
-{context}
-
-用户问题: {question}
+// ChatPromptTemplate：负责把 context / question 拼成结构化的消息
+const promptTemplate = ChatPromptTemplate.fromMessages([
+    ["system", `你是一个专业的《天龙八部》小说助手。基于小说内容回答问题，用准确、详细的语言。
 
 回答要求：
 1. 如果片段中有相关信息，请结合小说内容给出详细、准确的回答
 2. 可以综合多个片段的内容，提供完整的答案
 3. 如果片段中没有相关信息，请如实告知用户
 4. 回答要准确，符合小说的情节和人物设定
-5. 可以引用原文内容来支持你的回答
+5. 可以引用原文内容来支持你的回答`],
+    ["human", `请根据以下《天龙八部》小说片段内容回答问题：
 
-AI 助手的回答:`
-);
+{context}
+
+用户问题: {question}`]
+]);
 
 const ragChain = RunnableSequence.from([
     milvusSearch,
@@ -151,27 +149,16 @@ const ragChain = RunnableSequence.from([
         [
             (input) => input.hasContext,
             RunnableSequence.from([
-                new RunnableLambda({
-                    func: async (input) => {
-                        const { hasContext, question, context } = input;
-
-                        if (!hasContext) {
-                            const fallback =
-                                "抱歉，我没有找到相关的《天龙八部》内容。请尝试换一个问题。";
-                            console.log(fallback);
-                            return { question, context: "", answer: fallback, noContext: true };
-                        }
-
-                        // PromptTemplate 需要 { question, context }
-                        return { question, context, noContext: false };
-                    },
-                }),
                 promptTemplate,
                 model,
                 new StringOutputParser(),
             ]),
         ],
-        (input) => input
+        (input) => {
+            const fallback = "抱歉，我没有找到相关的《天龙八部》内容。请尝试换一个问题。";
+            console.log(fallback);
+            return fallback;
+        }
     ]),
 ]);
 
