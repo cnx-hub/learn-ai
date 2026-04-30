@@ -5,8 +5,12 @@ import { BookModule } from './book/book.module';
 import { AiModule } from './ai/ai.module';
 import { ConfigModule } from '@nestjs/config';
 import path from 'path';
+import { ServeStaticModule } from '@nestjs/serve-static';
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: path.join(__dirname, '..', 'public'),
+    }),
     BookModule,
     AiModule,
     ConfigModule.forRoot({
