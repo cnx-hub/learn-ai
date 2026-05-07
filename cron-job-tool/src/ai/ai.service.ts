@@ -1,6 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ChatOpenAI } from '@langchain/openai';
 import { Runnable } from '@langchain/core/runnables';
+import { StructuredTool } from '@langchain/core/tools';
 import {
   BaseMessage,
   AIMessage,
@@ -9,66 +10,69 @@ import {
   ToolMessage,
   AIMessageChunk,
 } from '@langchain/core/messages';
-import { tool } from '@langchain/core/tools';
-import { z } from 'zod';
+// import { tool } from '@langchain/core/tools';
+// import { z } from 'zod';
 
-const database = {
-  users: {
-    '001': {
-      id: '001',
-      name: '张三',
-      email: 'zhangsan@exampble.com',
-      role: 'admin',
-    },
-    '002': { id: '002', name: '李四', email: 'lisi@example.com', role: 'user' },
-    '003': {
-      id: '003',
-      name: '王五',
-      email: 'wangwu@example.com',
-      role: 'user',
-    },
-  },
-};
+// const database = {
+//   users: {
+//     '001': {
+//       id: '001',
+//       name: '张三',
+//       email: 'zhangsan@exampble.com',
+//       role: 'admin',
+//     },
+//     '002': { id: '002', name: '李四', email: 'lisi@example.com', role: 'user' },
+//     '003': {
+//       id: '003',
+//       name: '王五',
+//       email: 'wangwu@example.com',
+//       role: 'user',
+//     },
+//   },
+// };
 
-const queryUserArgsSchema = z.object({
-  userId: z.string().describe('用户 ID，例如：001，002，003'),
-});
+// const queryUserArgsSchema = z.object({
+//   userId: z.string().describe('用户 ID，例如：001，002，003'),
+// });
 
-type QueryUserArgs = {
-  userId: string;
-};
+// type QueryUserArgs = {
+//   userId: string;
+// };
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'user' | 'admin' | 'other'; // 根据实际情况调整
-}
+// interface User {
+//   id: string;
+//   name: string;
+//   email: string;
+//   role: 'user' | 'admin' | 'other'; // 根据实际情况调整
+// }
 
-const queryUserTool = tool(
-  ({ userId }: QueryUserArgs) => {
-    const user = database.users[userId] as User | undefined;
+// const queryUserTool = tool(
+//   ({ userId }: QueryUserArgs) => {
+//     const user = database.users[userId] as User | undefined;
 
-    if (!user) {
-      return `用户 ID ${userId} 不存在。可用的 ID: 001, 002, 003`;
-    }
+//     if (!user) {
+//       return `用户 ID ${userId} 不存在。可用的 ID: 001, 002, 003`;
+//     }
 
-    return `用户信息：\n- ID: ${user.id}\n- 姓名: ${user.name}\n- 邮箱: ${user.email}\n- 角色: ${user.role}`;
-  },
-  {
-    name: 'query_user',
-    description:
-      '查询数据库中的用户信息。输入用户 ID，返回该用户的详细信息（姓名、邮箱、角色）。',
-    schema: queryUserArgsSchema,
-  },
-);
+//     return `用户信息：\n- ID: ${user.id}\n- 姓名: ${user.name}\n- 邮箱: ${user.email}\n- 角色: ${user.role}`;
+//   },
+//   {
+//     name: 'query_user',
+//     description:
+//       '查询数据库中的用户信息。输入用户 ID，返回该用户的详细信息（姓名、邮箱、角色）。',
+//     schema: queryUserArgsSchema,
+//   },
+// );
 
 @Injectable()
 export class AiService {
   private readonly modelWithTools: Runnable<BaseMessage[], AIMessage>;
 
-  constructor(@Inject('CHAT_MODEL') model: ChatOpenAI) {
-    this.modelWithTools = model.bindTools([queryUserTool]);
+  constructor(
+    @Inject('CHAT_MODEL') model: ChatOpenAI,
+    @Inject('QUERY_USER_TOOL') private readonly queryUserTool: StructuredTool,
+  ) {
+    this.modelWithTools = model.bindTools([this.queryUserTool]);
   }
 
   async runChain(query: string): Promise<string> {
@@ -92,8 +96,9 @@ export class AiService {
         const toolName = toolCall.name;
 
         if (toolName === 'query_user') {
-          const args = queryUserArgsSchema.parse(toolCall.args);
-          const toolResult = await queryUserTool.invoke(args);
+          const toolResult = (await this.queryUserTool.invoke(
+            toolCall.args,
+          )) as string;
           messages.push(
             new ToolMessage({
               tool_call_id: toolCallId,
@@ -145,8 +150,9 @@ export class AiService {
         const toolName = toolCall.name;
 
         if (toolName === 'query_user') {
-          const args = queryUserArgsSchema.parse(toolCall.args);
-          const toolResult = await queryUserTool.invoke(args);
+          const toolResult = (await this.queryUserTool.invoke(
+            toolCall.args,
+          )) as string;
           messages.push(
             new ToolMessage({
               tool_call_id: toolCallId,
