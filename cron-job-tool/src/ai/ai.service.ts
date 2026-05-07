@@ -7,6 +7,7 @@ import {
   SystemMessage,
   HumanMessage,
   ToolMessage,
+  AIMessageChunk,
 } from '@langchain/core/messages';
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
@@ -87,6 +88,59 @@ export class AiService {
       }
 
       for (const toolCall of aiMsg.tool_calls) {
+        const toolCallId = toolCall.id ?? '';
+        const toolName = toolCall.name;
+
+        if (toolName === 'query_user') {
+          const args = queryUserArgsSchema.parse(toolCall.args);
+          const toolResult = await queryUserTool.invoke(args);
+          messages.push(
+            new ToolMessage({
+              tool_call_id: toolCallId,
+              name: toolName,
+              content: toolResult,
+            }),
+          );
+        }
+      }
+    }
+  }
+
+  async *runStreamChain(query: string): AsyncIterable<string> {
+    const messages: BaseMessage[] = [
+      new SystemMessage(
+        '你是一个通用任务助手，可以根据用户的目标规划步骤，并在需要时调用工具（如 query_user）查询用户信息，再来回答对应的问题',
+      ),
+      new HumanMessage(query),
+    ];
+
+    while (true) {
+      const stream = await this.modelWithTools.stream(messages);
+
+      let fullAiMessage: AIMessageChunk | null = null;
+      for await (const chunk of stream as AsyncIterable<AIMessageChunk>) {
+        fullAiMessage = fullAiMessage ? fullAiMessage.concat(chunk) : chunk;
+
+        const hasToolChunk =
+          fullAiMessage?.tool_call_chunks &&
+          fullAiMessage.tool_call_chunks.length > 0;
+
+        if (!hasToolChunk && chunk.content) {
+          yield chunk.content as string;
+        }
+      }
+
+      if (!fullAiMessage) {
+        return '';
+      }
+
+      messages.push(fullAiMessage);
+
+      if (!fullAiMessage.tool_calls?.length) {
+        return '';
+      }
+
+      for (const toolCall of fullAiMessage.tool_calls) {
         const toolCallId = toolCall.id ?? '';
         const toolName = toolCall.name;
 
