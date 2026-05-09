@@ -72,10 +72,12 @@ export class AiService {
     @Inject('CHAT_MODEL') model: ChatOpenAI,
     @Inject('QUERY_USER_TOOL') private readonly queryUserTool: StructuredTool,
     @Inject('SEND_MAIL_TOOL') private readonly sendMailTool: StructuredTool,
+    @Inject('WEB_SEARCH_TOOL') private readonly webSearchTool: StructuredTool,
   ) {
     this.modelWithTools = model.bindTools([
       this.queryUserTool,
       this.sendMailTool,
+      this.webSearchTool,
     ]);
   }
 
@@ -112,6 +114,17 @@ export class AiService {
           );
         } else if (toolName === 'send_mail') {
           const toolResult = (await this.sendMailTool.invoke(
+            toolCall.args,
+          )) as string;
+          messages.push(
+            new ToolMessage({
+              tool_call_id: toolCallId,
+              name: toolName,
+              content: toolResult,
+            }),
+          );
+        } else if (toolName === 'web_search') {
+          const toolResult = (await this.webSearchTool.invoke(
             toolCall.args,
           )) as string;
           messages.push(
@@ -177,6 +190,17 @@ export class AiService {
           );
         } else if (toolName === 'send_mail') {
           const toolResult = (await this.sendMailTool.invoke(
+            toolCall.args,
+          )) as string;
+          messages.push(
+            new ToolMessage({
+              tool_call_id: toolCallId,
+              name: toolName,
+              content: toolResult,
+            }),
+          );
+        } else if (toolName === 'web_search') {
+          const toolResult = (await this.webSearchTool.invoke(
             toolCall.args,
           )) as string;
           messages.push(
