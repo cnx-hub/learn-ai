@@ -5,6 +5,7 @@ import { AiModule } from './ai/ai.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join } from 'path';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { ServeStaticModule } from '@nestjs/serve-static';
 
 @Module({
   imports: [
@@ -12,6 +13,9 @@ import { MailerModule } from '@nestjs-modules/mailer';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: join(__dirname, '..', '..', '.env'),
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
     }),
     MailerModule.forRootAsync({
       inject: [ConfigService],
