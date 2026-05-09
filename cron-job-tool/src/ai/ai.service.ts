@@ -71,8 +71,12 @@ export class AiService {
   constructor(
     @Inject('CHAT_MODEL') model: ChatOpenAI,
     @Inject('QUERY_USER_TOOL') private readonly queryUserTool: StructuredTool,
+    @Inject('SEND_MAIL_TOOL') private readonly sendMailTool: StructuredTool,
   ) {
-    this.modelWithTools = model.bindTools([this.queryUserTool]);
+    this.modelWithTools = model.bindTools([
+      this.queryUserTool,
+      this.sendMailTool,
+    ]);
   }
 
   async runChain(query: string): Promise<string> {
@@ -97,6 +101,17 @@ export class AiService {
 
         if (toolName === 'query_user') {
           const toolResult = (await this.queryUserTool.invoke(
+            toolCall.args,
+          )) as string;
+          messages.push(
+            new ToolMessage({
+              tool_call_id: toolCallId,
+              name: toolName,
+              content: toolResult,
+            }),
+          );
+        } else if (toolName === 'send_mail') {
+          const toolResult = (await this.sendMailTool.invoke(
             toolCall.args,
           )) as string;
           messages.push(
@@ -151,6 +166,17 @@ export class AiService {
 
         if (toolName === 'query_user') {
           const toolResult = (await this.queryUserTool.invoke(
+            toolCall.args,
+          )) as string;
+          messages.push(
+            new ToolMessage({
+              tool_call_id: toolCallId,
+              name: toolName,
+              content: toolResult,
+            }),
+          );
+        } else if (toolName === 'send_mail') {
+          const toolResult = (await this.sendMailTool.invoke(
             toolCall.args,
           )) as string;
           messages.push(
