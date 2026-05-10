@@ -8,12 +8,10 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './users/entities/user.entity';
-import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
     AiModule,
-    UsersModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: join(__dirname, '..', '..', '.env'),
