@@ -56,8 +56,6 @@ export class JobService implements OnApplicationBootstrap {
         running,
       }
     });
-
-    return jobList;
   }
 
   async addJob(input:
@@ -97,6 +95,27 @@ export class JobService implements OnApplicationBootstrap {
     }
 
     return saved;
+  }
+
+  async toggleJob(jobId: string, enabled?: boolean) {
+    const job = await this.entityManager.findOne(Job, { where: { id: jobId } });
+    if (!job) {
+      throw new Error(`Job ${jobId} not found`);
+    }
+
+    const nextEnabled = enabled ?? !job.isEnabled;
+    if (job.isEnabled !== nextEnabled) {
+      job.isEnabled = nextEnabled;
+      await this.entityManager.save(Job, job);
+    }
+
+    if (job.isEnabled) {
+      await this.startRuntime(job);
+    } else {
+      await this.stopRuntime(job);
+    }
+
+    return job;
   }
 
   private async startRuntime(job: Job) {
@@ -155,6 +174,35 @@ export class JobService implements OnApplicationBootstrap {
 
       this.schedulerRegistry.addTimeout(job.id, ref);
       return
+    }
+  }
+
+  private async stopRuntime(job: Job) {
+    if (job.type === 'cron') {
+      const cronJobs = this.schedulerRegistry.getCronJobs();
+      const existing = cronJobs.get(job.id);
+      if (existing) {
+        existing.stop();
+        return;
+      }
+    }
+
+    if (job.type === 'every') {
+      const intervals = this.schedulerRegistry.getIntervals();
+      const existing = intervals.includes(job.id);
+      if (existing) {
+        this.schedulerRegistry.deleteInterval(job.id);
+        return;
+      }
+    }
+
+    if (job.type === 'at') {
+      const timeouts = this.schedulerRegistry.getTimeouts();
+      const existing = timeouts.includes(job.id);
+      if (existing) {
+        this.schedulerRegistry.deleteTimeout(job.id);
+        return;
+      }
     }
   }
 
