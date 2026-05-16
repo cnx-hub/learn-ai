@@ -21,6 +21,10 @@ export class UsersService {
     return this.entityManager.findOne(User, { where: { id } });
   }
 
+  findByName(name: string) {
+    return this.entityManager.findOne(User, { where: { name } });
+  }
+
   update(id: number, updateUserDto: UpdateUserDto) {
     return this.entityManager.update(User, id, updateUserDto);
   }

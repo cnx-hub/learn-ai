@@ -21,9 +21,7 @@ const formatDbUser = (user: DbUser) =>
 export class DbUsersCrudToolService {
     readonly tool;
 
-    private readonly usersService: UsersService;
-
-    constructor() {
+    constructor(private readonly usersService: UsersService) {
         const dbUsersCrudArgsSchema = z.object({
             action: z
                 .enum(['create', 'list', 'get', 'update', 'delete'])
@@ -33,18 +31,18 @@ export class DbUsersCrudToolService {
                 .int()
                 .positive()
                 .optional()
-                .describe('用户 ID（get / update / delete 时需要）'),
+                .describe('用户 ID（get / update / delete 时优先使用）'),
             name: z
                 .string()
                 .min(1)
                 .max(50)
                 .optional()
-                .describe('用户姓名（create 或 update 时可用）'),
+                .describe('用户姓名（create 时必须；get 时若无 id 可用此查询；update 时可用）'),
             email: z
                 .email()
                 .max(50)
                 .optional()
-                .describe('用户邮箱（create 或 update 时可用）'),
+                .describe('用户邮箱（create 时必须；update 时可用）'),
         });
 
         this.tool = tool(
@@ -67,14 +65,20 @@ export class DbUsersCrudToolService {
                         return `当前数据库 users 表中的用户列表：\n${lines}`;
                     }
                     case 'get': {
-                        if (!id) {
-                            return '查询单个用户需要提供 id。';
+                        if (id) {
+                            const user = await this.usersService.findOne(id);
+                            if (!user) {
+                                return `ID 为 ${id} 的用户在数据库中不存在。`;
+                            }
+                            return `用户信息：${formatDbUser(user)}`;
+                        } else if (name) {
+                            const user = await this.usersService.findByName(name);
+                            if (!user) {
+                                return `姓名为 "${name}" 的用户在数据库中不存在。`;
+                            }
+                            return `用户信息：${formatDbUser(user)}`;
                         }
-                        const user = await this.usersService.findOne(id);
-                        if (!user) {
-                            return `ID 为 ${id} 的用户在数据库中不存在。`;
-                        }
-                        return `用户信息：${formatDbUser(user)}`;
+                        return '查询单个用户需要提供 id 或 name。';
                     }
                     case 'update': {
                         if (!id) {

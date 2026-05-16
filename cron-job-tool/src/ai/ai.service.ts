@@ -70,7 +70,6 @@ export class AiService {
 
   constructor(
     @Inject('CHAT_MODEL') model: ChatOpenAI,
-    @Inject('QUERY_USER_TOOL') private readonly queryUserTool: StructuredTool,
     @Inject('SEND_MAIL_TOOL') private readonly sendMailTool: StructuredTool,
     @Inject('WEB_SEARCH_TOOL') private readonly webSearchTool: StructuredTool,
     @Inject('DB_USERS_CRUD_TOOL')
@@ -79,7 +78,6 @@ export class AiService {
     @Inject('TIME_NOW_TOOL') private readonly timeNowTool: StructuredTool,
   ) {
     this.modelWithTools = model.bindTools([
-      this.queryUserTool,
       this.sendMailTool,
       this.webSearchTool,
       this.dbUsersCrudTool,
@@ -91,9 +89,12 @@ export class AiService {
   async runChain(query: string): Promise<string> {
     const messages: BaseMessage[] = [
       new SystemMessage(
-        `你是一个通用任务助手，可以根据用户的目标规划步骤，并在需要时调用工具：\`query_user\` 查询或校验用户信息、\`send_mail\` 发送邮件、\`web_search\` 进行互联网搜索、\`db_users_crud\` 读写数据库 users 表、\`time_now\` 获取当前服务器时间、\`cron_job\` 创建和管理定时/周期任务（\`list\`/\`add\`/\`toggle\`），从而实现提醒、定期任务、数据同步等各种自动化需求。
+        `你是一个通用任务助手，可以根据用户的目标规划步骤，并在需要时调用工具：\`query_user\` 查询内存模拟数据库中的用户信息（支持 ID 或姓名）、\`send_mail\` 发送邮件、\`web_search\` 进行互联网搜索、\`db_users_crud\` 读写和查询真实用户数据库 users 表（查询时支持 ID 或姓名）、\`time_now\` 获取当前服务器时间、\`cron_job\` 创建和管理定时/周期任务（\`list\`/\`add\`/\`toggle\`），从而实现提醒、定期任务、数据同步等各种自动化需求。
 
-定时任务类型选择规则（非常重要）：
+注意：
+1. \`query_user\` 用于查询写死在代码里的模拟用户数据。
+2. \`db_users_crud\` 用于操作 MySQL 数据库中的真实用户数据。查询用户时，如果用户提供了姓名但没有提供 ID，请将姓名填入 \`name\` 参数并将 \`action\` 设为 \`get\`。
+3. 定时任务类型选择规则（非常重要）：
 - 用户说“X分钟/小时/天后”“在某个时间点”“到点提醒”（一次性）=> 用 \`cron_job\` + \`type=at\`（执行一次后自动停用），\`at\`=当前时间+X 或解析出的时间点。
 - 注意：\`time_now\` 提供的是 UTC 时间，你在计算 \`at\` 字段时必须使用该 UTC 时间。但在给用户回复确认信息时，请务必将时间转换为北京时间 (UTC+8) 以便用户理解。
 - 用户说“每X分钟/每小时/每天”“定期/循环/一直”（重复执行）=> 用 \`cron_job\` + \`type=every\`（每次执行），\`everyMs\`=X换算成毫秒
@@ -122,18 +123,7 @@ export class AiService {
         const toolCallId = toolCall.id ?? '';
         const toolName = toolCall.name;
 
-        if (toolName === 'query_user') {
-          const toolResult = (await this.queryUserTool.invoke(
-            toolCall.args,
-          )) as string;
-          messages.push(
-            new ToolMessage({
-              tool_call_id: toolCallId,
-              name: toolName,
-              content: toolResult,
-            }),
-          );
-        } else if (toolName === 'send_mail') {
+        if (toolName === 'send_mail') {
           const toolResult = (await this.sendMailTool.invoke(
             toolCall.args,
           )) as string;
@@ -196,9 +186,12 @@ export class AiService {
   async *runStreamChain(query: string): AsyncIterable<string> {
     const messages: BaseMessage[] = [
       new SystemMessage(
-        `你是一个通用任务助手，可以根据用户的目标规划步骤，并在需要时调用工具：\`query_user\` 查询或校验用户信息、\`send_mail\` 发送邮件、\`web_search\` 进行互联网搜索、\`db_users_crud\` 读写数据库 users 表、\`time_now\` 获取当前服务器时间、\`cron_job\` 创建和管理定时/周期任务（\`list\`/\`add\`/\`toggle\`），从而实现提醒、定期任务、数据同步等各种自动化需求。
+        `你是一个通用任务助手，可以根据用户的目标规划步骤，并在需要时调用工具：\`query_user\` 查询内存模拟数据库中的用户信息（支持 ID 或姓名）、\`send_mail\` 发送邮件、\`web_search\` 进行互联网搜索、\`db_users_crud\` 读写和查询真实用户数据库 users 表（查询时支持 ID 或姓名）、\`time_now\` 获取当前服务器时间、\`cron_job\` 创建和管理定时/周期任务（\`list\`/\`add\`/\`toggle\`），从而实现提醒、定期任务、数据同步等各种自动化需求。
 
-定时任务类型选择规则（非常重要）：
+注意：
+1. \`query_user\` 用于查询写死在代码里的模拟用户数据。
+2. \`db_users_crud\` 用于操作 MySQL 数据库中的真实用户数据。查询用户时，如果用户提供了姓名但没有提供 ID，请将姓名填入 \`name\` 参数并将 \`action\` 设为 \`get\`。
+3. 定时任务类型选择规则（非常重要）：
 - 用户说“X分钟/小时/天后”“在某个时间点”“到点提醒”（一次性）=> 用 \`cron_job\` + \`type=at\`（执行一次后自动停用），\`at\`=当前时间+X 或解析出的时间点。
 - 注意：\`time_now\` 提供的是 UTC 时间，你在计算 \`at\` 字段时必须使用该 UTC 时间。但在给用户回复确认信息时，请务必将时间转换为北京时间 (UTC+8) 以便用户理解。
 - 用户说“每X分钟/每小时/每天”“定期/循环/一直”（重复执行）=> 用 \`cron_job\` + \`type=every\`（每次执行），\`everyMs\`=X换算成毫秒
@@ -245,18 +238,7 @@ export class AiService {
         const toolCallId = toolCall.id ?? '';
         const toolName = toolCall.name;
 
-        if (toolName === 'query_user') {
-          const toolResult = (await this.queryUserTool.invoke(
-            toolCall.args,
-          )) as string;
-          messages.push(
-            new ToolMessage({
-              tool_call_id: toolCallId,
-              name: toolName,
-              content: toolResult,
-            }),
-          );
-        } else if (toolName === 'send_mail') {
+        if (toolName === 'send_mail') {
           const toolResult = (await this.sendMailTool.invoke(
             toolCall.args,
           )) as string;
