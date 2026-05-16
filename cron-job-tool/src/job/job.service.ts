@@ -218,6 +218,8 @@ export class JobService implements OnApplicationBootstrap {
     return new CronJob(cronExpr, async () => {
       this.logger.log(`run job ${job.id}, ${job.instruction}`);
       await this.entityManager.update(Job, job.id, { lastRun: new Date() });
+
+      
     })
 
   }
