@@ -1,13 +1,15 @@
-import { Module } from '@nestjs/common';
+import { Module,forwardRef } from '@nestjs/common';
 import { WebSearchToolService } from './web-search-tool.service';
 import { SendMailToolService } from './send-mail-tool.service';
 import { TimeNowToolService } from './time-now-tool.service';
 import { LLMService } from './llm.service';
 import { DbUsersCrudToolService } from './db-users-crud-tool.service';
 import { CronJobToolService } from './cron-job-tool.service'
-
+import { UsersModule } from '../users/users.module';
+import { JobModule } from '../job/job.module';
 
 @Module({
+    imports: [UsersModule, forwardRef(() => JobModule)],
     providers: [
         SendMailToolService,
         WebSearchToolService,

@@ -2,14 +2,12 @@ import { Module } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { AiController } from './ai.controller';
 import { UserService } from './user.service';
-import { UsersModule } from '../users/users.module';
 // import { tool } from '@langchain/core/tools';
 // import { z } from 'zod';
-import { JobModule } from '../job/job.module';
 import { ToolModule } from '../tool/tool.model'
 
 @Module({
-  imports: [UsersModule, JobModule, ToolModule],
+  imports: [ToolModule],
   controllers: [AiController],
   providers: [
     AiService,

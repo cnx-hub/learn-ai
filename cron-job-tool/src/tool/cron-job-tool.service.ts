@@ -7,9 +7,7 @@ import { JobService } from '../job/job.service'
 export class CronJobToolService {
     readonly tool;
 
-    private readonly jobService: JobService;
-
-    constructor() {
+    constructor(private readonly jobService: JobService) {
          const cronJobArgsSchema = z.object({
           action: z
             .enum(['list', 'add', 'toggle'])

@@ -123,62 +123,31 @@ export class AiService {
         const toolCallId = toolCall.id ?? '';
         const toolName = toolCall.name;
 
-        if (toolName === 'send_mail') {
-          const toolResult = (await this.sendMailTool.invoke(
-            toolCall.args,
-          )) as string;
-          messages.push(
-            new ToolMessage({
-              tool_call_id: toolCallId,
-              name: toolName,
-              content: toolResult,
-            }),
-          );
-        } else if (toolName === 'web_search') {
-          const toolResult = (await this.webSearchTool.invoke(
-            toolCall.args,
-          )) as string;
-          messages.push(
-            new ToolMessage({
-              tool_call_id: toolCallId,
-              name: toolName,
-              content: toolResult,
-            }),
-          );
-        } else if (toolName === 'db_users_crud') {
-          const toolResult = (await this.dbUsersCrudTool.invoke(
-            toolCall.args,
-          )) as string;
-          messages.push(
-            new ToolMessage({
-              tool_call_id: toolCallId,
-              name: toolName,
-              content: toolResult,
-            }),
-          );
-        } else if (toolName === 'cron_job') {
-          const toolResult = (await this.cronJobTool.invoke(
-            toolCall.args,
-          )) as string;
-          messages.push(
-            new ToolMessage({
-              tool_call_id: toolCallId,
-              name: toolName,
-              content: toolResult,
-            }),
-          );
-        } else if (toolName === 'time_now') {
-          const toolResult = (await this.timeNowTool.invoke(
-            toolCall.args,
-          )) as string;
-          messages.push(
-            new ToolMessage({
-              tool_call_id: toolCallId,
-              name: toolName,
-              content: toolResult,
-            }),
-          );
+        let toolResult: any;
+        try {
+          if (toolName === 'send_mail') {
+            toolResult = await this.sendMailTool.invoke(toolCall.args);
+          } else if (toolName === 'web_search') {
+            toolResult = await this.webSearchTool.invoke(toolCall.args);
+          } else if (toolName === 'db_users_crud') {
+            toolResult = await this.dbUsersCrudTool.invoke(toolCall.args);
+          } else if (toolName === 'cron_job') {
+            toolResult = await this.cronJobTool.invoke(toolCall.args);
+          } else if (toolName === 'time_now') {
+            toolResult = await this.timeNowTool.invoke(toolCall.args);
+          }
+        } catch (error) {
+          toolResult = `工具调用失败: ${(error as Error).message}`;
         }
+
+        const content = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult);
+        messages.push(
+          new ToolMessage({
+            tool_call_id: toolCallId,
+            name: toolName,
+            content,
+          }),
+        );
       }
     }
   }
@@ -233,67 +202,35 @@ export class AiService {
       if (!fullAiMessage.tool_calls?.length) {
         return '';
       }
-
       for (const toolCall of fullAiMessage.tool_calls) {
         const toolCallId = toolCall.id ?? '';
         const toolName = toolCall.name;
 
-        if (toolName === 'send_mail') {
-          const toolResult = (await this.sendMailTool.invoke(
-            toolCall.args,
-          )) as string;
-          messages.push(
-            new ToolMessage({
-              tool_call_id: toolCallId,
-              name: toolName,
-              content: toolResult,
-            }),
-          );
-        } else if (toolName === 'web_search') {
-          const toolResult = (await this.webSearchTool.invoke(
-            toolCall.args,
-          )) as string;
-          messages.push(
-            new ToolMessage({
-              tool_call_id: toolCallId,
-              name: toolName,
-              content: toolResult,
-            }),
-          );
-        } else if (toolName === 'db_users_crud') {
-          const toolResult = (await this.dbUsersCrudTool.invoke(
-            toolCall.args,
-          )) as string;
-          messages.push(
-            new ToolMessage({
-              tool_call_id: toolCallId,
-              name: toolName,
-              content: toolResult,
-            }),
-          );
-        } else if (toolName === 'cron_job') {
-          const toolResult = (await this.cronJobTool.invoke(
-            toolCall.args,
-          )) as string;
-          messages.push(
-            new ToolMessage({
-              tool_call_id: toolCallId,
-              name: toolName,
-              content: toolResult,
-            }),
-          );
-        } else if (toolName === 'time_now') {
-          const toolResult = (await this.timeNowTool.invoke(
-            toolCall.args,
-          )) as string;
-          messages.push(
-            new ToolMessage({
-              tool_call_id: toolCallId,
-              name: toolName,
-              content: toolResult,
-            }),
-          );
+        let toolResult: any;
+        try {
+          if (toolName === 'send_mail') {
+            toolResult = await this.sendMailTool.invoke(toolCall.args);
+          } else if (toolName === 'web_search') {
+            toolResult = await this.webSearchTool.invoke(toolCall.args);
+          } else if (toolName === 'db_users_crud') {
+            toolResult = await this.dbUsersCrudTool.invoke(toolCall.args);
+          } else if (toolName === 'cron_job') {
+            toolResult = await this.cronJobTool.invoke(toolCall.args);
+          } else if (toolName === 'time_now') {
+            toolResult = await this.timeNowTool.invoke(toolCall.args);
+          }
+        } catch (error) {
+          toolResult = `工具调用失败: ${(error as Error).message}`;
         }
+
+        const content = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult);
+        messages.push(
+          new ToolMessage({
+            tool_call_id: toolCallId,
+            name: toolName,
+            content,
+          }),
+        );
       }
     }
   }

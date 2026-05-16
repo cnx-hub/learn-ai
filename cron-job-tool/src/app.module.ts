@@ -69,27 +69,27 @@ export class AppModule implements OnApplicationBootstrap {
   schedulerRegistry: SchedulerRegistry;
 
   onApplicationBootstrap() {
-    const job = new CronJob(CronExpression.EVERY_SECOND, () => {
-      console.log('This job runs every second');
-    });
-    this.schedulerRegistry.addCronJob('job1', job);
-    job.start();
-    setTimeout(() => {
-      this.schedulerRegistry.deleteCronJob('job1');
-    }, 5000);
-    const job2 = setInterval(() => {
-      console.log('run interval job');
-    }, 1000);
-    this.schedulerRegistry.addInterval('job2', job2);
-    setTimeout(() => {
-      this.schedulerRegistry.deleteInterval('job2');
-    }, 5000);
-    const job3 = setTimeout(() => {
-      console.log('run timeout job');
-    }, 3000);
-    this.schedulerRegistry.addTimeout('timeout1', job3);
-    setTimeout(() => {
-      this.schedulerRegistry.deleteTimeout('timeout1');
-    }, 5000);
+    // const job = new CronJob(CronExpression.EVERY_SECOND, () => {
+    //   console.log('This job runs every second');
+    // });
+    // this.schedulerRegistry.addCronJob('job1', job);
+    // job.start();
+    // setTimeout(() => {
+    //   this.schedulerRegistry.deleteCronJob('job1');
+    // }, 5000);
+    // const job2 = setInterval(() => {
+    //   console.log('run interval job');
+    // }, 1000);
+    // this.schedulerRegistry.addInterval('job2', job2);
+    // setTimeout(() => {
+    //   this.schedulerRegistry.deleteInterval('job2');
+    // }, 5000);
+    // const job3 = setTimeout(() => {
+    //   console.log('run timeout job');
+    // }, 3000);
+    // this.schedulerRegistry.addTimeout('timeout1', job3);
+    // setTimeout(() => {
+    //   this.schedulerRegistry.deleteTimeout('timeout1');
+    // }, 5000);
   }
 }
