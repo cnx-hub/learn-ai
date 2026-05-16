@@ -24,7 +24,7 @@ type DbUsersCrudArgs = {
 };
 
 const formatDbUser = (user: DbUser) =>
-  `ID=${user.id}，姓名=${user.name}，邮箱=${user.email}，创建时间=${user.createdAt?.toISOString() ?? ''}`;
+  `ID=${user.id}，姓名=${user.name}，邮箱=${user.email}，创建时间=${user.createdAt?.toLocaleString() ?? ''}`;
 
 @Module({
   imports: [UsersModule, JobModule],
@@ -350,11 +350,11 @@ URL: ${page.url}
         return tool(
           async () => {
             const now = new Date();
-            return `当前服务器时间：${now.toISOString()}（星期${['日', '一', '二', '三', '四', '五', '六'][now.getDay()]}）`;
+            return `当前服务器时间 (UTC): ${now.toISOString()}（星期${['日', '一', '二', '三', '四', '五', '六'][now.getDay()]}）`;
           },
           {
             name: 'time_now',
-            description: '获取当前服务器的 ISO 时间和星期，用于计算相对时间。',
+            description: '获取当前服务器的 ISO 时间 (UTC) 和星期。AI 必须基于此 UTC 时间进行相对时间计算。',
             schema: timeNowArgsSchema,
           },
         );
@@ -430,7 +430,7 @@ URL: ${page.url}
               if (!jobs.length) return '当前没有任何定时任务。';
               const lines = jobs
                 .map((j: any) => {
-                  return `id=${j.id} type=${j.type} enabled=${j.isEnabled} running=${j.running} cron=${j.cron ?? ''} everyMs=${j.everyMs ?? ''} at=${j.at instanceof Date ? j.at.toISOString() : j.at ?? ''} instruction=${j.instruction ?? ''}`;
+                  return `id=${j.id} type=${j.type} enabled=${j.isEnabled} running=${j.running} cron=${j.cron ?? ''} everyMs=${j.everyMs ?? ''} at=${j.at instanceof Date ? j.at.toLocaleString() : j.at ?? ''} instruction=${j.instruction ?? ''}`;
                 })
                 .join('\n');
               return `当前定时任务列表（type 说明：cron=按表达式循环；every=按间隔循环；at=到点执行一次后自动停用）：\n${lines}`;

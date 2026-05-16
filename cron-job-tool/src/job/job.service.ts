@@ -27,16 +27,20 @@ export class JobService implements OnApplicationBootstrap {
     const timeouts = this.schedulerRegistry.getTimeouts();
 
     for (const job of enabledJobs) {
-      const alreadyRegistered =
-        (job.type === 'cron' && cronJobs.has(job.id)) ||
-        (job.type === 'every' && intervals.includes(job.id)) ||
-        (job.type === 'at' && timeouts.includes(job.id));
+      try {
+        const alreadyRegistered =
+          (job.type === 'cron' && cronJobs.has(job.id)) ||
+          (job.type === 'every' && intervals.includes(job.id)) ||
+          (job.type === 'at' && timeouts.includes(job.id));
 
-      if (alreadyRegistered) {
-        continue;
+        if (alreadyRegistered) {
+          continue;
+        }
+
+        await this.startRuntime(job);
+      } catch (e) {
+        this.logger.error(`Failed to start job ${job.id}: ${e.message}`);
       }
-
-      await this.startRuntime(job);
     }
   }
 
@@ -141,15 +145,17 @@ export class JobService implements OnApplicationBootstrap {
         return;
       }
 
-      if (typeof job.everyMs !== 'number' || job.everyMs <= 0) {
-        throw new Error(`Invalid everyMs for job ${job.id}`);
+      const everyMs = Number(job.everyMs);
+      this.logger.log(`run job ${job.id}, ${everyMs}`)
+      if (Number.isNaN(everyMs) || everyMs <= 0) {
+        throw new Error(`Invalid everyMs for job ${job.id}: ${job.everyMs}`);
       }
 
       const ref = setInterval(async () => {
         this.logger.log(`run job ${job.id}, ${job.instruction}`);
         await this.entityManager.update(Job, job.id, { lastRun: new Date() })
 
-      }, job.everyMs)
+      }, everyMs)
       this.schedulerRegistry.addInterval(job.id, ref)
       return;
     }
@@ -159,11 +165,12 @@ export class JobService implements OnApplicationBootstrap {
 
       if (timeouts.includes(job.id)) return;
 
-      if (!job.at) {
-        throw new Error(`Invalid at for job ${job.id}`);
+      const at = job.at instanceof Date ? job.at : (job.at ? new Date(job.at) : null);
+      if (!at || Number.isNaN(at.getTime())) {
+        throw new Error(`Invalid at for job ${job.id}: ${job.at}`);
       }
 
-      const delay = Math.max(0, job.at.getTime() - Date.now());
+      const delay = Math.max(0, at.getTime() - Date.now());
 
       const ref = setTimeout(async () => {
         this.logger.log(`run job ${job.id}, ${job.instruction}`);
