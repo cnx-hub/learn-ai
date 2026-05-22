@@ -1,0 +1,15 @@
+import { Injectable, Inject } from '@nestjs/common';
+import { PromptTemplate } from '@langchain/core/prompts';
+import { ChatOpenAI } from '@langchain/openai';
+import { StringOutputParser } from '@langchain/core/output_parsers';
+import type { Runnable } from '@langchain/core/runnables';
+
+@Injectable()
+export class AiService {
+  private readonly chain: Runnable;
+
+  constructor(@Inject('CHAT_MODEL') model: ChatOpenAI) {
+    const prompt = PromptTemplate.fromTemplate('请回答以下问题：\n\n{query}');
+    this.chain = prompt.pipe(model).pipe(new StringOutputParser());
+  }
+}
