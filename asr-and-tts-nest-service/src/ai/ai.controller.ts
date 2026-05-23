@@ -1,17 +1,27 @@
 import { Controller, Sse, Query } from '@nestjs/common';
 import { AiService } from './ai.service';
-import { map, from, Observable } from 'rxjs'
+import { map, from, Observable } from 'rxjs';
+import { AI_TTS_STREAM_EVENT, type AiTtsStreamEvent } from '../common/stream-events';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 
 @Controller('ai')
 export class AiController {
 
-    constructor(private readonly aiService: AiService) { }
-
+    constructor(private readonly aiService: AiService,
+        private readonly eventEmitter: EventEmitter2
+    ) { }
 
     @Sse('chat/stream')
-    chatStream(@Query('query') query: string): Observable<{ data: string }> {
-        return from(this.aiService.streamChain(query)).pipe(
+    chatStream(@Query('query') query: string,
+        @Query('ttsSessionId') ttsSessionId?: string,
+    ): Observable<{ data: string }> {
+        const sessionId = ttsSessionId?.trim();
+        if (sessionId) {
+            const startEvent: AiTtsStreamEvent = { type: 'start', sessionId, query };
+            this.eventEmitter.emit(AI_TTS_STREAM_EVENT, startEvent);
+        }
+        return from(this.aiService.streamChain(query, sessionId)).pipe(
             map((chunk) => ({ data: chunk }))
         );
     }

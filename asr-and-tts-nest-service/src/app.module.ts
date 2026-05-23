@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { join } from 'path';
 import { SpeechModule } from './speech/speech.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 console.log(__dirname, '__dirname')
 
@@ -19,6 +20,9 @@ console.log(__dirname, '__dirname')
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'public'),
       // renderPath: '/public',
+    }),
+    EventEmitterModule.forRoot({
+      maxListeners: 200
     }),
     SpeechModule,
   ],
