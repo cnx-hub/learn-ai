@@ -12,7 +12,7 @@ import { ConfigService } from '@nestjs/config';
       provide: 'CHAT_MODEL',
       useFactory: (configService: ConfigService) => {
         return new ChatOpenAI({
-          modelName: configService.get<string>('OPENAI_MODEL_NAME'),
+          modelName: configService.get<string>('MODEL_NAME'),
           apiKey: configService.get('OPENAI_API_KEY'),
           configuration: {
             baseURL: configService.get('OPENAI_BASE_URL'),

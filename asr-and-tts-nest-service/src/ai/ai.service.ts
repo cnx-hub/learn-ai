@@ -12,4 +12,11 @@ export class AiService {
     const prompt = PromptTemplate.fromTemplate('请回答以下问题：\n\n{query}');
     this.chain = prompt.pipe(model).pipe(new StringOutputParser());
   }
+
+  async *streamChain(query: string) {
+    const stream = await this.chain.stream({ query });
+    for await (const chunk of stream) {
+      yield chunk;
+    }
+  }
 }
