@@ -18,9 +18,13 @@ function App() {
     [chatUrl],
   )
 
-  const { messages, sendMessage, status, stop, error, clearError } = useChat<UIMessage>({
+  const res = useChat<UIMessage>({
     transport,
   });
+
+  console.log('res :', res, transport)
+
+  const { messages, sendMessage, status, stop, error, clearError } = res;
 
   const [input, setInput] = useState('')
 
