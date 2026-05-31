@@ -2,6 +2,24 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as WebSocket from 'ws';
 import { TtsRelayService } from './speech/tts-relay.service';
+import { createServer } from 'net';
+
+function findAvailablePort(startPort: number): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = createServer();
+    server.listen(startPort, () => {
+      const { port } = server.address() as { port: number };
+      server.close(() => resolve(port));
+    });
+    server.on('error', () => {
+      if (startPort < 65535) {
+        resolve(findAvailablePort(startPort + 1));
+      } else {
+        reject(new Error('No available port found'));
+      }
+    });
+  });
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -23,6 +41,12 @@ async function bootstrap() {
     });
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  const desiredPort = Number(process.env.PORT) || 3000;
+  const port = await findAvailablePort(desiredPort);
+  await app.listen(port);
+  if (port !== desiredPort) {
+    console.log(`Port ${desiredPort} is in use, switched to port ${port}`);
+  }
+  console.log(`Application is running on: http://localhost:${port}`);
 }
 bootstrap();
