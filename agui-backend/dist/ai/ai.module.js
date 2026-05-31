@@ -20,7 +20,8 @@ exports.AiModule = AiModule;
 exports.AiModule = AiModule = __decorate([
     (0, common_1.Module)({
         controllers: [ai_controller_1.AiController],
-        providers: [ai_service_1.AiService,
+        providers: [
+            ai_service_1.AiService,
             {
                 provide: 'CHAT_MODEL',
                 inject: [config_1.ConfigService],
@@ -31,7 +32,7 @@ exports.AiModule = AiModule = __decorate([
                         temperature: 0.5,
                         configuration: {
                             baseURL: configService.get('OPENAI_BASE_URL'),
-                        }
+                        },
                     });
                 },
             },
@@ -107,11 +108,11 @@ URL: ${page.url}
                     }, {
                         name: 'web_search',
                         schema,
-                        description: '使用 Bocha Web Search API 搜索互联网网页。输入为搜索关键词（可选 count 指定结果数量），返回包含标题、URL、摘要、网站名称、图标和时间等信息的结果列表。'
+                        description: '使用 Bocha Web Search API 搜索互联网网页。输入为搜索关键词（可选 count 指定结果数量），返回包含标题、URL、摘要、网站名称、图标和时间等信息的结果列表。',
                     });
                 },
-            }
-        ]
+            },
+        ],
     })
 ], AiModule);
 //# sourceMappingURL=ai.module.js.map
