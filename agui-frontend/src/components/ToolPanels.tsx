@@ -5,7 +5,7 @@ import {
   type ToolUIPart,
   type UIMessage,
 } from 'ai'
-// import { StreamdownText } from './StreamdownText'
+import { StreamdownText } from './StreamdownText'
 import './ToolPanels.css'
 
 type AnyToolPart = ToolUIPart | DynamicToolUIPart
@@ -415,11 +415,9 @@ export function MessagePart({
   textStreamActive = false,
 }: MessagePartProps) {
   if (part.type === 'text') {
-    return part.text;
-
-    // return (
-    //   <StreamdownText isStreaming={textStreamActive}>{part.text}</StreamdownText>
-    // )
+    return (
+      <StreamdownText isStreaming={textStreamActive}>{part.text}</StreamdownText>
+    )
   }
   if (isToolUIPart(part)) {
     return (
