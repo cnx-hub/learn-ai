@@ -1,13 +1,13 @@
 import { useChat } from '@ai-sdk/react'
-import { useState, useMemo } from 'react';
-import { DefaultChatTransport, type UIMessage } from 'ai';
-import { MessagePart } from './components/ToolPanels';
-import './App.css';
+import { DefaultChatTransport, type UIMessage } from 'ai'
+import { useMemo, useState } from 'react'
+import { MessagePart } from './components/ToolPanels'
+import './App.css'
 
 /** 后端根地址（与本地 `agui-backend` 默认端口一致） */
 const API_BASE = 'http://localhost:3000'
 
-function App() {
+export default function App() {
   const chatUrl = `${API_BASE}/ai/chat`
 
   const transport = useMemo(
@@ -18,18 +18,14 @@ function App() {
     [chatUrl],
   )
 
-  const res = useChat<UIMessage>({
+  const { messages, sendMessage, status, stop, error, clearError } = useChat<UIMessage>({
     transport,
-  });
-
-  const { messages, sendMessage, status, stop, error, clearError } = res;
-
+  })
   const [input, setInput] = useState('')
-
 
   const busy = status === 'submitted' || status === 'streaming'
   const canSend = status === 'ready' && input.trim().length > 0
-  const lastAssistant = messages.filter((m) => m.role === 'assistant').at?.(-1)
+  const lastAssistant = messages.filter((m) => m.role === 'assistant').at(-1)
 
   return (
     <div className="chat-app">
@@ -136,5 +132,3 @@ function App() {
     </div>
   )
 }
-
-export default App
