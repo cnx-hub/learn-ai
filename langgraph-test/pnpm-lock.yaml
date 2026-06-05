@@ -14,6 +14,9 @@ importers:
       '@langchain/langgraph':
         specifier: ^1.3.3
         version: 1.3.3(@langchain/core@1.1.48(openai@6.41.0(zod@4.4.3)))(zod@4.4.3)
+      '@langchain/langgraph-supervisor':
+        specifier: ^1.0.4
+        version: 1.0.4(@langchain/core@1.1.48(openai@6.41.0(zod@4.4.3)))(@langchain/langgraph@1.3.3(@langchain/core@1.1.48(openai@6.41.0(zod@4.4.3)))(zod@4.4.3))
       '@langchain/openai':
         specifier: ^1.4.7
         version: 1.4.7(@langchain/core@1.1.48(openai@6.41.0(zod@4.4.3)))
@@ -59,6 +62,13 @@ packages:
         optional: true
       vue:
         optional: true
+
+  '@langchain/langgraph-supervisor@1.0.4':
+    resolution: {integrity: sha512-9Eft/SVjgp1U4TXrgDm8SgtZV4PLByEDy5shXhCTBF6JxpBLD4vN8ITu5Nv8gfZ8fVdDrYtEApVYulne46q/Bg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@langchain/core': ^1.1.44
+      '@langchain/langgraph': ^1.3.1-rc.0
 
   '@langchain/langgraph@1.3.3':
     resolution: {integrity: sha512-8xbpGUQNBcWua7ivT5vUvDnQ+6Qbt0JO8RisgXZ8guPXNqh8plGVvrODW68S4AlJbOYY2yi0ROKtrL/1yN3MBQ==}
@@ -211,6 +221,13 @@ snapshots:
       p-queue: 9.3.0
       p-retry: 7.1.1
       uuid: 14.0.0
+
+  '@langchain/langgraph-supervisor@1.0.4(@langchain/core@1.1.48(openai@6.41.0(zod@4.4.3)))(@langchain/langgraph@1.3.3(@langchain/core@1.1.48(openai@6.41.0(zod@4.4.3)))(zod@4.4.3))':
+    dependencies:
+      '@langchain/core': 1.1.48(openai@6.41.0(zod@4.4.3))
+      '@langchain/langgraph': 1.3.3(@langchain/core@1.1.48(openai@6.41.0(zod@4.4.3)))(zod@4.4.3)
+      uuid: 14.0.0
+      zod: 4.4.3
 
   '@langchain/langgraph@1.3.3(@langchain/core@1.1.48(openai@6.41.0(zod@4.4.3)))(zod@4.4.3)':
     dependencies:
