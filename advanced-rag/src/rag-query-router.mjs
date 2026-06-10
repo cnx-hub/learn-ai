@@ -169,3 +169,81 @@ const graph = new StateGraph(stateGraph)
 const drawable = await graph.getGraphAsync();
 const mermaid = drawable.drawMermaid({ withStyles: true });
 console.log(mermaid);
+
+
+async function main() {
+    const question = '阿朱的结局是什么？';
+    const k = 5;
+
+    try {
+        console.log("连接到 Milvus...");
+        vectorStore = await Milvus.fromExistingCollection(embeddings, {
+            collectionName: "ebook_collection",
+            url: "localhost:19530",
+            textField: "content",
+            primaryField: "id",
+            vectorField: "vector",
+            indexCreateOptions: {
+                metric_type: "COSINE",
+                index_type: "HNSW",
+                params: { M: 16, efConstruction: 200 },
+                search_params: { ef: 64 },
+            },
+        })
+
+        vectorStore.indexSearchParams = { metric_type: "COSINE", params: JSON.stringify({ ef: 64 }) };
+        console.log("✓ 已连接\n");
+
+        try {
+            await vectorStore.client.loadCollection({ collection_name: "ebook_collection" });
+            console.log("✓ 集合 ebook_collection 已加载\n");
+        } catch (error) {
+            if (!error.message.includes("already loaded")) {
+                throw error;
+            }
+            console.log("✓ 集合 ebook_collection 已处于加载状态\n");
+        }
+
+        console.log("=".repeat(80));
+        console.log(`问题: ${question}`);
+        console.log("=".repeat(80));
+
+        const res = await graph.invoke({
+            question,
+            k: Number.isFinite(k) ? k : 5,
+            strategy: "",
+            routeReason: "",
+            documents: [],
+            generation: "",
+        })
+
+        if (result.strategy === "complex") {
+            console.log("\n【检索相关内容】");
+            if (result.documents.length === 0) {
+                console.log("未找到相关内容");
+            } else {
+                result.documents.forEach((item, i) => {
+                    console.log(`\n[片段 ${i + 1}] 相似度: ${item.score.toFixed(4)}`);
+                    console.log(`书籍: ${item.book_id}`);
+                    console.log(`章节: 第 ${item.chapter_num} 章`);
+                    console.log(`片段索引: ${item.index}`);
+                    console.log(
+                        `内容: ${item.content.substring(0, 200)}${item.content.length > 200 ? "..." : ""}`,
+                    );
+                });
+            }
+        }
+
+        console.log(`\n最终策略: ${result.strategy}`);
+        if (!result.generation?.trim()) {
+            console.log("模型未返回内容。");
+        }
+
+    } catch (error) {
+
+    }
+
+}
+
+
+main()
