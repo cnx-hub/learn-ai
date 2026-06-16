@@ -7,12 +7,14 @@ import { Book } from './book/entities/book.entity';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 @Module({
   imports: [
     BookModule,
     TypeOrmModule.forRoot({
       type: 'mysql',
-      host: 'localhost',
+      host: isProduction ? 'mysql-prod' : 'localhost',
       port: 3306,
       username: 'root',
       password: 'admin',
@@ -22,7 +24,7 @@ import { join } from 'path';
       entities: [Book],
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'),
+      rootPath: join(__dirname, 'public'),
       serveRoot: '/books',
     }),
   ],
