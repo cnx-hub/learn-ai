@@ -10,6 +10,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@elastic/elasticsearch": "^8.19.1"
+    "@elastic/elasticsearch": "^8.19.1",
+    "@langchain/community": "^1.1.29",
+    "@langchain/core": "^1.2.0",
+    "@langchain/langgraph": "^1.4.4",
+    "@langchain/openai": "^1.5.1",
+    "@zilliz/milvus2-sdk-node": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "zod": "^4.4.3"
   }
 }
