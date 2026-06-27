@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { ChatPromptTemplate } from '@langchain/core/prompts'
 
 export const QueryAugmentationSchema = z.object({
   queries: z
@@ -20,7 +20,7 @@ const AUGMENT_PROMPT = ChatPromptTemplate.fromMessages([
   ["human", "{query}"],
 ]);
 
-export const normalizeThreeQueries = (original, list) => {
+const normalizeThreeQueries = (original, list) => {
   const out = (list || [])
     .map((s) => (typeof s === "string" ? s.trim() : ""))
     .filter(Boolean);
@@ -30,7 +30,8 @@ export const normalizeThreeQueries = (original, list) => {
 };
 
 export const augmentQuery = async (chatModel, query) => {
-  const chain = chatModel.withStructuredOutput(QueryAugmentationSchema);
+  const structured = chatModel.withStructuredOutput(QueryAugmentationSchema);
+  const chain = AUGMENT_PROMPT.pipe(structured);
 
   try {
     const raw = await chain.invoke({ query });
