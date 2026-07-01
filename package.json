@@ -23,6 +23,7 @@
     "epub2": "^3.0.2",
     "html-to-text": "^9.0.5",
     "js-tiktoken": "^1.0.21",
+    "neo4j-driver": "^6.1.0",
     "zod": "^4.3.6"
   }
 }

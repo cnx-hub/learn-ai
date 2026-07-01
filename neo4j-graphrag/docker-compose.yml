@@ -1,6 +1,6 @@
 services:
   neo4j:
-    image: neo4j:latest
+    image: neo4j:5
     container_name: neo4j-container
     ports:
       - "7474:7474" # Web 管理界面
@@ -12,5 +12,4 @@ services:
     volumes:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/neo4j/data:/data
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/neo4j/logs:/logs
-      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/neo4j/conf:/conf
     restart: unless-stopped
