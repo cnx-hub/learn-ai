@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { createAgent, tool } from "langchain";
 import { createSupervisor } from "@langchain/langgraph-supervisor";
 import { HumanMessage } from '@langchain/core/messages';
-
+import 'dotenv/config';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, '../../.env'), quiet: true });

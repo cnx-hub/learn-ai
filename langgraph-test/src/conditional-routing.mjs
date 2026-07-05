@@ -1,4 +1,6 @@
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
+import 'dotenv/config';
+
 
 const StateAnnotation = Annotation.Root({
     query: Annotation({
@@ -49,6 +51,6 @@ const drawable = await graph.getGraphAsync();
 const mermaid = drawable.drawMermaid({ withStyles: true });
 console.log(mermaid);
 
-// graph.invoke({ query: "10 * 8" })
+graph.invoke({ query: "10 * 8" })
 const result = await graph.invoke({ query: "hello" });
 console.log("result:", result);

@@ -1,5 +1,6 @@
 import { START, END, MemorySaver } from "@langchain/langgraph";
 import { ChatOpenAI } from '@langchain/openai';
+import 'dotenv/config';
 
 import dotenv from 'dotenv';
 import { join, dirname } from 'path';
