@@ -66,6 +66,8 @@ function listHistoryFiles() {
 let messages = [];
 let knownHistory = new Set(listHistoryFiles());
 
+console.log('knownHistory', listHistoryFiles())
+
 for (const prompt of prompts) {
   console.log("\n用户:", prompt);
   ({ messages } = await agent.invoke(
