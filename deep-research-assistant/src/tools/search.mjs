@@ -73,7 +73,7 @@ async function bochaWebSearch(query, count = 10) {
 
 export const webSearch = tool(
     async ({ query, count = 10 }) => {
-        console.log(`  🔎 搜索: ${input.query}（${count} 条）`);
+        console.log(`  🔎 搜索: ${query}（${count} 条）`);
         return bochaWebSearch(query, count);
     },
     {

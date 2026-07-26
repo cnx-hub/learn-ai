@@ -155,7 +155,7 @@ export function createIntelligenceDeskAgent() {
   });
 
   const model = new ChatOpenAI({
-    model: process.env.OPENAI_MODEL,
+    model: process.env.MODEL_NAME,
     apiKey: apiKey,
     temperature: 0,
     configuration: {
