@@ -6,10 +6,12 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ParseAgePipe } from '../common/pipes/parse-age.pipe';
 
 @Controller('user')
 export class UserController {
@@ -23,6 +25,12 @@ export class UserController {
   @Get()
   findAll() {
     return this.userService.findAll();
+  }
+
+  /** Pipe 演示：age 查询参数自动从字符串转为数字 */
+  @Get('age-demo')
+  ageDemo(@Query('age', ParseAgePipe) age: number) {
+    return { age, type: typeof age };
   }
 
   @Get(':id')
