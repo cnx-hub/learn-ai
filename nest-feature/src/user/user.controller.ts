@@ -1,17 +1,22 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ParseAgePipe } from '../common/pipes/parse-age.pipe';
+import { AuthGuard } from '../common/guards/auth.guard';
+import { ParsePositiveIntPipe } from '../common/pipes/parse-positive-int.pipe';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { JwtPayload } from '../common/interfaces/api-response.interface';
 
 @Controller('user')
 export class UserController {
@@ -27,24 +32,40 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  /** Pipe 演示：age 查询参数自动从字符串转为数字 */
+  /** Pipe 演示：age 查询参数自动从字符串转为数字 ?age=25 */
   @Get('age-demo')
   ageDemo(@Query('age', ParseAgePipe) age: number) {
     return { age, type: typeof age };
   }
 
+  /** Guard 演示：必须携带 Token；普通用户只能查自己，管理员可查全部  /2 */
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+  @UseGuards(AuthGuard)
+  findOne(
+    @Param('id', ParsePositiveIntPipe) id: number,
+    @CurrentUser() currentUser: JwtPayload,
+  ) {
+    return {
+      ...this.userService.findOne(id),
+      requestedBy: currentUser.username,
+    };
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  @UseGuards(AuthGuard)
+  update(
+    @Param('id', ParsePositiveIntPipe) id: number,
+    @Body() updateUserDto: UpdateUserDto,
+    @CurrentUser() currentUser: JwtPayload,
+  ) {
+    return {
+      ...this.userService.update(id, updateUserDto),
+      updatedBy: currentUser.username,
+    };
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+  remove(@Param('id', ParsePositiveIntPipe) id: number) {
+    return this.userService.remove(id);
   }
 }
