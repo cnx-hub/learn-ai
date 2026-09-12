@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://unpkg.com/axios@1.6.5/dist/axios.min.js"></script>
+</head>
+<body>
+    <input id="fileInput" type="file"/>
+    
+    <script>
+        const fileInput = document.getElementById('fileInput');
+
+        async function getMinIOInfo() {
+            await '请求应用服务器拿到 presigned POST 凭证';
+            return {
+                // 上传目标地址（MinIO 的 presigned POST URL）
+                url: 'http://localhost:9000/agent-bucket123',
+                // presigned POST 返回的所有字段（由后端 createPresignedPost 生成）
+                fields: {
+                    key: 'example.txt',
+                    'x-amz-algorithm': 'AWS4-HMAC-SHA256',
+                    'x-amz-credential': 'admin/20260912/us-east-1/s3/aws4_request',
+                    'x-amz-date': '20260912T160116Z',
+                    policy: 'eyJleHBpcmF0aW9uIjoiMjAyNi0wOS0xM1QxNjowMToxNloiLCJjb25kaXRpb25zIjpbWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsMCwxMDQ4NTc2MDAwXSx7ImJ1Y2tldCI6ImFnZW50LWJ1Y2tldDEyMyJ9LHsiWC1BbXotQWxnb3JpdGhtIjoiQVdTNC1ITUFDLVNIQTI1NiJ9LHsiWC1BbXotQ3JlZGVudGlhbCI6ImFkbWluLzIwMjYwOTEyL3VzLWVhc3QtMS9zMy9hd3M0X3JlcXVlc3QifSx7IlgtQW16LURhdGUiOiIyMDI2MDkxMlQxNjAxMTZaIn0sWyJzdGFydHMtd2l0aCIsIiRrZXkiLCIiXV19',
+                    'x-amz-signature': '334d602fdd8086532aad789f3b244a88adfc6293e01477c422e43673e313d112',
+                },
+                // MinIO 访问地址（用于拼接图片预览 URL）
+                publicUrl: 'http://localhost:9000/agent-bucket123'
+            }
+        }
+
+        fileInput.onchange = async () => {
+            const file = fileInput.files[0];
+
+            const minioInfo = await getMinIOInfo();
+
+            const formdata = new FormData();
+
+            // 将 presigned POST 返回的所有字段追加到表单
+            for (const [key, value] of Object.entries(minioInfo.fields)) {
+                // 将 ${filename} 占位符替换为实际文件名
+                formdata.append(key, key === 'key' ? file.name : value);
+            }
+            // file 必须是最后一个字段
+            formdata.append('file', file);
+
+            const res = await axios.post(minioInfo.url, formdata);
+            if(res.status === 200 || res.status === 204) {
+                
+                const img = document.createElement('img');
+                img.src = minioInfo.publicUrl + '/' + file.name;
+                document.body.append(img);
+
+                alert('上传成功');
+            }
+        }
+    </script>
+</body>
+</html>

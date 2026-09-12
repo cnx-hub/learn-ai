@@ -12,6 +12,8 @@
   "dependencies": {
     "@langchain/core": "^1.2.11",
     "@langchain/openai": "^1.5.13",
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@aws-sdk/s3-presigned-post": "^3.600.0",
     "ali-oss": "^6.23.0",
     "dashscope-sdk-official": "^1.26.0",
     "dotenv": "^17.4.2"
