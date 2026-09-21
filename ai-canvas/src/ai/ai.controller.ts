@@ -7,28 +7,12 @@ import { UpdateAiDto } from './dto/update-ai.dto';
 export class AiController {
   constructor(private readonly aiService: AiService) {}
 
-  @Post()
-  create(@Body() createAiDto: CreateAiDto) {
-    return this.aiService.create(createAiDto);
-  }
+   @Get('oss/upload-signature')
 
-  @Get()
-  findAll() {
-    return this.aiService.findAll();
-  }
+     @Get('image/list')
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.aiService.findOne(+id);
-  }
+       @Post('image')
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAiDto: UpdateAiDto) {
-    return this.aiService.update(+id, updateAiDto);
-  }
+         @Delete('image/:id')
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.aiService.remove(+id);
-  }
 }
