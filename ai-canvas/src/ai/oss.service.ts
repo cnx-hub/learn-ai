@@ -4,51 +4,43 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import OSS from 'ali-oss';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { extname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-export interface OssUploadSignature {
-  host: string;
-  key: string;
+export interface MinioUploadSignature {
   url: string;
-  OSSAccessKeyId: string;
-  policy: string;
-  Signature: string;
-  expire: string;
+  fields: Record<string, string>;
+  publicUrl: string;
 }
 
 @Injectable()
 export class OssService {
   private readonly logger = new Logger(OssService.name);
-  private readonly client: OSS;
-  private readonly postClient: OSS;
+  private readonly client: S3Client;
   private readonly bucket: string;
-  private readonly region: string;
+  private readonly endpoint: string;
 
   constructor(private readonly config: ConfigService) {
-    this.bucket = this.trimEnv('OSS_BUCKET');
-    this.region = this.trimEnv('OSS_REGION');
-    const accessKeyId = this.trimEnv('OSS_ACCESS_KEY_ID');
-    const accessKeySecret = this.trimEnv('OSS_ACCESS_KEY_SECRET');
+    this.bucket = this.trimEnv('MINIO_BUCKET');
+    this.endpoint = this.trimEnv('MINIO_ENDPOINT');
+    const accessKey = this.trimEnv('MINIO_ACCESS_KEY');
+    const secretKey = this.trimEnv('MINIO_SECRET_KEY');
 
-    this.client = new OSS({
-      region: this.region,
-      accessKeyId,
-      accessKeySecret,
-      authorizationV4: true,
-      bucket: this.bucket,
-    });
-
-    this.postClient = new OSS({
-      region: this.region,
-      accessKeyId,
-      accessKeySecret,
-      bucket: this.bucket,
+    this.client = new S3Client({
+      region: 'us-east-1',
+      endpoint: this.endpoint,
+      credentials: {
+        accessKeyId: accessKey,
+        secretAccessKey: secretKey,
+      },
+      forcePathStyle: true,
     });
   }
 
-  createUploadPolicy(ext = '.jpg'): OssUploadSignature {
+  async createUploadPolicy(ext = '.jpg'): Promise<MinioUploadSignature> {
     const prefix = this.config.get<string>(
       'OSS_UPLOAD_PREFIX',
       'ai-canvas/uploads',
@@ -56,29 +48,20 @@ export class OssService {
     const normalizedExt = ext.startsWith('.') ? ext : `.${ext}`;
     const key = `${prefix}/${Date.now()}-${randomUUID()}${normalizedExt}`;
 
-    const expire = new Date();
-    expire.setHours(expire.getHours() + 1);
-
-    const policy = {
-      expiration: expire.toISOString(),
-      conditions: [
-        ['content-length-range', 0, 1048576000],
-        ['eq', '$key', key],
-      ],
-    };
-
     try {
-      const signature = this.postClient.calculatePostSignature(policy);
-      const host = `https://${this.bucket}.${this.region}.aliyuncs.com`;
+      const presignedPost = await createPresignedPost(this.client, {
+        Bucket: this.bucket,
+        Key: key,
+        Conditions: [['content-length-range', 0, 1048576000]],
+        Expires: 60 * 60,
+      });
+
+      const publicUrl = `${this.endpoint}/${this.bucket}`;
 
       return {
-        host,
-        key,
-        url: `${host}/${key}`,
-        OSSAccessKeyId: signature.OSSAccessKeyId,
-        policy: signature.policy,
-        Signature: signature.Signature,
-        expire: expire.toISOString(),
+        url: presignedPost.url,
+        fields: { ...presignedPost.fields, key },
+        publicUrl,
       };
     } catch (error) {
       throw this.wrapOssError(error, 'create upload signature');
@@ -86,13 +69,10 @@ export class OssService {
   }
 
   resolveReadableUrl(imageUrl: string): string {
-    const host = `${this.bucket}.${this.region}.aliyuncs.com`;
-    if (!imageUrl.includes(host)) {
+    if (!imageUrl.includes(this.endpoint.replace(/^https?:\/\//, ''))) {
       return imageUrl;
     }
-
-    const objectKey = decodeURIComponent(new URL(imageUrl).pathname.slice(1));
-    return this.getSignedUrl(objectKey);
+    return imageUrl;
   }
 
   async uploadBuffer(
@@ -104,15 +84,26 @@ export class OssService {
     const objectKey = `${prefix}/${Date.now()}-${randomUUID()}${ext}`;
 
     try {
-      const result = await this.client.put(objectKey, buffer);
-      return { url: result.url, objectKey };
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: objectKey,
+          Body: buffer,
+        }),
+      );
+      const url = `${this.endpoint}/${this.bucket}/${objectKey}`;
+      return { url, objectKey };
     } catch (error) {
-      throw this.wrapOssError(error, 'upload to OSS');
+      throw this.wrapOssError(error, 'upload to MinIO');
     }
   }
 
-  getSignedUrl(objectKey: string, expires = 3600): string {
-    return this.client.signatureUrl(objectKey, { expires });
+  async getSignedUrl(objectKey: string, expires = 3600): Promise<string> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: objectKey,
+    });
+    return getSignedUrl(this.client, command, { expiresIn: expires });
   }
 
   async uploadFromUrl(sourceUrl: string): Promise<string> {
@@ -135,36 +126,11 @@ export class OssService {
   }
 
   private wrapOssError(error: unknown, action: string): Error {
-    const ossError = error as {
-      code?: string;
-      message?: string;
-      status?: number;
-    };
-
     this.logger.error(
-      `OSS ${action} failed: ${ossError.code ?? 'UnknownError'} - ${ossError.message ?? error}`,
+      `MinIO ${action} failed: ${(error as Error)?.message ?? error}`,
     );
-
-    if (ossError.code === 'InvalidAccessKeyId') {
-      return new InternalServerErrorException(
-        'OSS AccessKeyId 无效，请检查 .env 中的 OSS_ACCESS_KEY_ID 是否为当前阿里云账号下有效的 RAM 密钥',
-      );
-    }
-
-    if (ossError.code === 'SignatureDoesNotMatch') {
-      return new InternalServerErrorException(
-        'OSS AccessKeySecret 不正确，请检查 .env 中的 OSS_ACCESS_KEY_SECRET',
-      );
-    }
-
-    if (ossError.code === 'NoSuchBucket') {
-      return new InternalServerErrorException(
-        'OSS Bucket 不存在，请检查 OSS_BUCKET 和 OSS_REGION 是否匹配',
-      );
-    }
-
     return new InternalServerErrorException(
-      `OSS ${action} failed: ${ossError.message ?? 'unknown error'}`,
+      `MinIO ${action} failed: ${(error as Error)?.message ?? 'unknown error'}`,
     );
   }
 }
