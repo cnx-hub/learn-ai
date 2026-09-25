@@ -48,7 +48,7 @@ export class AiService {
       ? await this.generateByEdit(
           [
             { text: dto.prompt },
-            { image: this.ossService.resolveReadableUrl(inputImageUrl) },
+            { image: await this.ossService.resolveModelImage(inputImageUrl) },
           ],
           options,
         )
@@ -61,7 +61,7 @@ export class AiService {
       url,
       inputImageUrl,
       mode: inputImageUrl ? 'edit' : 'text',
-      size: options.size ?? (inputImageUrl ? '1K' : '1280*1280'),
+      size: options.size ?? (inputImageUrl ? 'auto' : '1280*1280'),
     });
   }
 
@@ -82,13 +82,15 @@ export class AiService {
     options: WanImageOptions,
   ): Promise<string> {
     const raw = await this.wanCall({
-      model: 'wan2.6-image',
+      model: 'qwen-image-3.0-pro',
       messages: [{ role: 'user', content }],
       prompt_extend: options.promptExtend,
       watermark: options.watermark,
       n: 1,
       enable_interleave: false,
-      size: options.size ?? '1K',
+      // 图生图不传 size，由模型按参考图自动推荐；
+      // DashScope 只接受 '<width>*<height>'，传 '1K' 会报 400
+      ...(options.size ? { size: options.size } : {}),
     });
 
     const result = raw as GenerationResult;
@@ -112,7 +114,7 @@ export class AiService {
     this.logger.log('text-to-image started (wan2.6-t2i sync)');
 
     const raw = await this.wanCall({
-      model: 'wan2.6-t2i',
+      model: 'qwen-image-3.0-pro',
       messages: [{ role: 'user', content }],
       prompt_extend: options.promptExtend,
       watermark: options.watermark,
