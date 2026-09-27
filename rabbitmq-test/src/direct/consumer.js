@@ -33,6 +33,7 @@ async function main() {
 
     await channel.consume(QUEUE, async (message) => {
         console.log(message.content.toString());
+        await channel.ack(message);
         await channel.close();
         await connection.close();
     });
