@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DocumentEntity } from './document/entities/document.entity';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { DocumentEntity } from './document/entities/document.entity';
         ),
       }),
     }),
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [AppService],
