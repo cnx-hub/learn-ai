@@ -7,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DocumentEntity } from './document/entities/document.entity';
 import { StorageModule } from './storage/storage.module';
+import { PipelineModule } from './pipeline/pipeline.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { StorageModule } from './storage/storage.module';
       }),
     }),
     StorageModule,
+    PipelineModule,
   ],
   controllers: [AppController],
   providers: [AppService],
