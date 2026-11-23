@@ -8,6 +8,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { DocumentEntity } from './document/entities/document.entity';
 import { StorageModule } from './storage/storage.module';
 import { PipelineModule } from './pipeline/pipeline.module';
+import { MqModule } from './mq/mq.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { PipelineModule } from './pipeline/pipeline.module';
     }),
     StorageModule,
     PipelineModule,
+    MqModule,
   ],
   controllers: [AppController],
   providers: [AppService],
